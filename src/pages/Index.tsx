@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,6 +10,7 @@ const Index = () => {
   const [inputLanguage, setInputLanguage] = useState('nl-NL');
   const [outputLanguage, setOutputLanguage] = useState('nl');
   const [transcript, setTranscript] = useState('');
+  const [translatedText, setTranslatedText] = useState('');
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   
@@ -60,6 +60,38 @@ const Index = () => {
       }
     };
   }, [isRecording]);
+
+  // Translation effect
+  useEffect(() => {
+    if (transcript && transcript.trim() !== '') {
+      translateText(transcript);
+    }
+  }, [transcript, outputLanguage]);
+
+  const translateText = async (text: string) => {
+    if (!text.trim()) return;
+    
+    try {
+      // Using a free translation API (MyMemory)
+      const response = await fetch(
+        `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${inputLanguage.split('-')[0]}|${outputLanguage}`
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.responseData && data.responseData.translatedText) {
+          setTranslatedText(data.responseData.translatedText);
+        }
+      } else {
+        // Fallback: show original text if translation fails
+        setTranslatedText(text);
+      }
+    } catch (error) {
+      console.error('Translation error:', error);
+      // Fallback: show original text if translation fails
+      setTranslatedText(text);
+    }
+  };
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -253,21 +285,39 @@ const Index = () => {
             )}
           </div>
 
-          {/* Transcript Output */}
+          {/* Original Transcript */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Transcriptie</label>
+            <label className="text-sm font-medium text-gray-700">
+              Originele Transcriptie ({inputLanguages.find(lang => lang.code === inputLanguage)?.name})
+            </label>
             <Textarea
               value={transcript}
               onChange={(e) => setTranscript(e.target.value)}
-              placeholder="De transcriptie verschijnt hier na de opname..."
-              className="min-h-[120px] resize-none"
+              placeholder="De originele transcriptie verschijnt hier na de opname..."
+              className="min-h-[100px] resize-none"
+            />
+          </div>
+
+          {/* Translated Output */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">
+              Vertaalde Uitvoer ({outputLanguages.find(lang => lang.code === outputLanguage)?.name})
+            </label>
+            <Textarea
+              value={translatedText}
+              onChange={(e) => setTranslatedText(e.target.value)}
+              placeholder="De vertaalde tekst verschijnt hier automatisch..."
+              className="min-h-[100px] resize-none"
             />
           </div>
 
           {/* Clear Button */}
-          {transcript && (
+          {(transcript || translatedText) && (
             <Button
-              onClick={() => setTranscript('')}
+              onClick={() => {
+                setTranscript('');
+                setTranslatedText('');
+              }}
               variant="outline"
               className="w-full"
             >
