@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,6 +14,7 @@ const Index = () => {
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const recognitionRef = useRef<any>(null);
   const { toast } = useToast();
 
   const inputLanguages = [
@@ -40,6 +40,42 @@ const Index = () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       
+      // Start Web Speech API recognition
+      if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.lang = inputLanguage;
+        recognitionRef.current.continuous = true;
+        recognitionRef.current.interimResults = true;
+
+        recognitionRef.current.onresult = (event: any) => {
+          let finalTranscript = '';
+          let interimTranscript = '';
+
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              finalTranscript += transcript;
+            } else {
+              interimTranscript += transcript;
+            }
+          }
+
+          setTranscript(finalTranscript + interimTranscript);
+        };
+
+        recognitionRef.current.onerror = (event: any) => {
+          console.error('Speech recognition error:', event.error);
+          toast({
+            title: "Spraakherkenning fout",
+            description: "Er is een probleem met de spraakherkenning",
+            variant: "destructive",
+          });
+        };
+
+        recognitionRef.current.start();
+      }
+      
       mediaRecorderRef.current = new MediaRecorder(stream);
       audioChunksRef.current = [];
 
@@ -50,8 +86,10 @@ const Index = () => {
       };
 
       mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-        await transcribeAudio(audioBlob);
+        // Stop speech recognition
+        if (recognitionRef.current) {
+          recognitionRef.current.stop();
+        }
         
         // Stop all tracks to release microphone
         stream.getTracks().forEach(track => track.stop());
@@ -77,36 +115,17 @@ const Index = () => {
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
+      
+      // Stop speech recognition
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      
       setIsRecording(false);
-      setIsTranscribing(true);
       
       toast({
         title: "Opname gestopt",
-        description: "Audio wordt nu getranscribeerd...",
-      });
-    }
-  };
-
-  const transcribeAudio = async (audioBlob: Blob) => {
-    try {
-      // Simuleer transcriptie proces
-      setTimeout(() => {
-        const mockTranscript = "Dit is een voorbeeldtranscriptie van het opgenomen gesprek in het Nederlands.";
-        setTranscript(mockTranscript);
-        setIsTranscribing(false);
-        
-        toast({
-          title: "Transcriptie voltooid",
-          description: "Het gesprek is succesvol getranscribeerd",
-        });
-      }, 2000);
-    } catch (error) {
-      console.error('Error transcribing audio:', error);
-      setIsTranscribing(false);
-      toast({
-        title: "Transcriptiefout",
-        description: "Er is een fout opgetreden bij het transcriberen",
-        variant: "destructive",
+        description: "Spraakherkenning voltooid",
       });
     }
   };
