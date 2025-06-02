@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, MicOff, Square } from "lucide-react";
+import { Mic, Square } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
@@ -89,10 +89,9 @@ const Index = () => {
 
   const transcribeAudio = async (audioBlob: Blob) => {
     try {
-      // Hier zou je normaal een transcriptie API aanroepen
-      // Voor nu simuleren we een transcriptie
+      // Simuleer transcriptie proces
       setTimeout(() => {
-        const mockTranscript = "Dit is een voorbeeldtranscriptie van het opgenomen gesprek.";
+        const mockTranscript = "Dit is een voorbeeldtranscriptie van het opgenomen gesprek in het Nederlands.";
         setTranscript(mockTranscript);
         setIsTranscribing(false);
         
@@ -109,6 +108,14 @@ const Index = () => {
         description: "Er is een fout opgetreden bij het transcriberen",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleRecordingToggle = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
     }
   };
 
@@ -158,44 +165,34 @@ const Index = () => {
 
           {/* Recording Button */}
           <div className="flex justify-center py-4">
-            {!isRecording ? (
-              <Button
-                onClick={startRecording}
-                size="lg"
-                className="w-20 h-20 rounded-full bg-red-500 hover:bg-red-600 transition-all duration-200 shadow-lg"
-                disabled={isTranscribing}
-              >
-                <Mic className="w-8 h-8 text-white" />
-              </Button>
-            ) : (
-              <Button
-                onClick={stopRecording}
-                size="lg"
-                className="w-20 h-20 rounded-full bg-gray-500 hover:bg-gray-600 transition-all duration-200 shadow-lg animate-pulse"
-              >
+            <Button
+              onClick={handleRecordingToggle}
+              size="lg"
+              className={`w-20 h-20 rounded-full transition-all duration-200 shadow-lg ${
+                isRecording 
+                  ? 'bg-red-500 hover:bg-red-600' 
+                  : 'bg-blue-500 hover:bg-blue-600'
+              }`}
+              disabled={isTranscribing}
+            >
+              {isRecording ? (
                 <Square className="w-6 h-6 text-white" />
-              </Button>
-            )}
+              ) : (
+                <Mic className="w-8 h-8 text-white" />
+              )}
+            </Button>
           </div>
 
-          {/* Recording Status */}
-          {isRecording && (
-            <div className="text-center">
-              <div className="flex items-center justify-center space-x-2">
-                <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                <span className="text-red-600 font-medium">Opname actief...</span>
-              </div>
-            </div>
-          )}
-
-          {isTranscribing && (
-            <div className="text-center">
-              <div className="flex items-center justify-center space-x-2">
-                <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-                <span className="text-blue-600 font-medium">Transcriberen...</span>
-              </div>
-            </div>
-          )}
+          {/* Status Message */}
+          <div className="text-center">
+            {isRecording ? (
+              <p className="text-red-600 font-medium">Er wordt opgenomen...</p>
+            ) : isTranscribing ? (
+              <p className="text-blue-600 font-medium">Transcriberen...</p>
+            ) : (
+              <p className="text-gray-600">Tik op de knop om op te nemen</p>
+            )}
+          </div>
 
           {/* Transcript Output */}
           <div className="space-y-2">
