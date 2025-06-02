@@ -3,45 +3,28 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/placeholder.svg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Taalkeuze Mobiel PWA</title>
-    
-    <!-- PWA Meta Tags -->
-    <meta name="description" content="Een mobiele PWA voor taalkeuze en spraakopname">
+    <title>Taalkeuze & Opname PWA</title>
+    <meta name="description" content="Een PWA voor taalkeuze en gespreksopname">
     <meta name="theme-color" content="#3b82f6">
     <link rel="manifest" href="/manifest.json">
-    
-    <!-- Apple Touch Icon -->
-    <link rel="apple-touch-icon" href="/placeholder.svg">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="TaalKeuze">
-    
-    <!-- Windows Meta Tags -->
-    <meta name="msapplication-TileColor" content="#3b82f6">
-    <meta name="msapplication-config" content="/browserconfig.xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    
-    <!-- Service Worker Registration -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-              console.log('SW registered: ', registration);
-            })
-            .catch((registrationError) => {
-              console.log('SW registration failed: ', registrationError);
-            });
+            .then(registration => console.log('SW registered'))
+            .catch(registrationError => console.log('SW registration failed'));
         });
       }
     </script>
-    
-    <!-- Lovable GPT Engineer Script -->
     <script src="https://cdn.gpteng.co/gptengineer.js" defer></script>
   </body>
 </html>

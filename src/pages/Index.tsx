@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,10 +12,12 @@ const Index = () => {
   const [outputLanguage, setOutputLanguage] = useState('nl');
   const [transcript, setTranscript] = useState('');
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recognitionRef = useRef<any>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
   const inputLanguages = [
@@ -35,6 +38,34 @@ const Index = () => {
     { code: 'es', name: 'Español' },
     { code: 'it', name: 'Italiano' },
   ];
+
+  // Timer effect for recording
+  useEffect(() => {
+    if (isRecording) {
+      setRecordingTime(0);
+      timerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+    } else {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      setRecordingTime(0);
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [isRecording]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const startRecording = async () => {
     try {
@@ -183,11 +214,11 @@ const Index = () => {
           </div>
 
           {/* Recording Button */}
-          <div className="flex justify-center py-4">
+          <div className="flex flex-col items-center py-4 space-y-4">
             <Button
               onClick={handleRecordingToggle}
               size="lg"
-              className={`w-20 h-20 rounded-full transition-all duration-200 shadow-lg ${
+              className={`w-20 h-20 rounded-full transition-all duration-200 shadow-lg font-poppins font-medium ${
                 isRecording 
                   ? 'bg-red-500 hover:bg-red-600' 
                   : 'bg-blue-500 hover:bg-blue-600'
@@ -200,6 +231,15 @@ const Index = () => {
                 <Mic className="w-8 h-8 text-white" />
               )}
             </Button>
+            
+            {/* Recording time display */}
+            {isRecording && (
+              <div className="text-center">
+                <p className="text-lg font-poppins font-semibold text-red-600">
+                  {formatTime(recordingTime)}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Status Message */}
@@ -209,7 +249,7 @@ const Index = () => {
             ) : isTranscribing ? (
               <p className="text-blue-600 font-medium">Transcriberen...</p>
             ) : (
-              <p className="text-gray-600">Tik op de knop om op te nemen</p>
+              <p className="text-gray-600 font-poppins font-medium">Opnemen</p>
             )}
           </div>
 
